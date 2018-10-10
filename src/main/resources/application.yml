@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:sqlserver://212.64.64.36:8989;DatabaseName=Demo
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    username: db_dev
+    password: chuangnongkeji123
+  jpa:
+    properties: 
+      hibernate: 
+        hbm2ddl: 
+          auto: update
+    show-sql: true
+    hibernate:      naming:        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl  redis:    database: 0
+    host: 127.0.0.1
+    port: 6379
+    password: xxxxxx
+    jedis:
+      pool:
+                        #最大连接数量        max-active: 10
+                      #最大阻塞等待时间(负数表示没限制)
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+    timeout: 10000
+logging:
+  level: 
+    com.smartvillage: trace  pattern:    console: "%d{yyyy-MM-dd} [%thread] %-5level %logger{50} - %msg%n"
+        
+        
