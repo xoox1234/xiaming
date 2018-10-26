@@ -6,7 +6,7 @@
 	<groupId>com.smartvillage</groupId>
 	<artifactId>smartvillage</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 
 	<name>smartvillage</name>
 	<description>Demo project for Spring Boot</description>
@@ -33,7 +33,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
+		<!-- <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency> -->
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
@@ -50,6 +53,10 @@
 			<scope>test</scope>
 		</dependency>
 		<!-- 整合redis -->
+		<dependency>
+			<groupId>redis.clients</groupId>
+    		<artifactId>jedis</artifactId>
+		</dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -57,7 +64,11 @@
         <dependency>			
 	        <groupId>org.apache.commons</groupId>			
 	        <artifactId>commons-pool2</artifactId>			
-	        <version>2.4.2</version>		</dependency> 		
+	    </dependency>
+	    <dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-lang3</artifactId>
+		</dependency> 		
         <!--fastjson-->		
         <dependency>			
 	        <groupId>com.alibaba</groupId>			
@@ -86,6 +97,33 @@
         <artifactId>fastjson</artifactId>
         <version>1.2.13</version>
     </dependency>
+    <dependency>
+        <!-- devtool热部署 -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+	 </dependency>
+      <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.1</version>
+       </dependency>
+       <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <!-- 极光短信 -->
+        <dependency>
+		    <groupId>cn.jpush.api</groupId>
+		    <artifactId>jsms-client</artifactId>
+		    <version>1.2.5</version>
+		</dependency>
+        <!-- 支持 @ConfigurationProperties 注解 -->  
+	    <dependency>  
+	        <groupId>org.springframework.boot</groupId>  
+	        <artifactId>spring-boot-configuration-processor</artifactId>  
+	        <optional>true</optional>  
+	    </dependency>  
 	</dependencies>
 
 	<build>
@@ -93,6 +131,16 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<mainClass>com.smartvillage.SmartvillageApplication</mainClass>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<fork>true</fork>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
