@@ -1,8 +1,8 @@
 package com.smartvillage.manager.impl;
 
 import java.util.Date;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -11,8 +11,9 @@ import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.LockedAccountException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.apache.commons.lang3.StringUtils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.smartvillage.authorization.jpush.JSMSExample;
 import com.smartvillage.authorization.wxapi.manager.WeiXinAuthService;
 import com.smartvillage.config.ResultStatus;
 import com.smartvillage.domain.Users;
@@ -29,14 +33,15 @@ import com.smartvillage.manager.loginInfoService;
 import com.smartvillage.model.AuthModel;
 import com.smartvillage.model.LoginModel;
 import com.smartvillage.model.ResultModel;
+import com.smartvillage.model.SendModel;
 import com.smartvillage.repository.UsersCredentialRepository;
 import com.smartvillage.repository.UsersRepository;
-import com.smartvillage.tools.MyDES;
-import com.smartvillage.tools.PasswordUtils;
+import com.smartvillage.tools.JSONUtils;
 
 
 @Service
 public class loginInfoServiceImpl implements loginInfoService{
+	private static final Logger LOGGER = LoggerFactory.getLogger(loginInfoServiceImpl.class);
 	@Autowired
 	private RedisTemplate<String, Object> redistemplate;
 	@Autowired 
@@ -53,22 +58,31 @@ public class loginInfoServiceImpl implements loginInfoService{
 			Assert.notNull(phone, "手机号不能空");
 			return res;
 		}
-		String pwd = authModel.getPwd();
+		if(phone.length() != 11) {
+			Assert.notNull(phone, "手机号不正确");
+			return res;
+		}
+		/*String pwd = authModel.getPwd();
 		if("null".equals(pwd) || pwd == null) {
 			Assert.notNull(pwd,"请输入密码");
 			return res;
-		}
+		}*/
 		String msg_code = authModel.getMsgCode();
 		if("null".equals(msg_code) || msg_code == null) {
 			Assert.notNull(msg_code,"请输入验证码");
 			return res;
-		}else {//手机发送验证码  暂时不做
-			// String string = redistemplate.opsForValue().get("xxxxx").toString();
-			 String string = "2";
-			 if("null".equals(string) || string == null) {
-					Assert.notNull(string,"验证码错误");
-					return res;
-				}
+		}else {
+			String msg_id = redistemplate.opsForValue().get("SEND_CODE_"+phone).toString();
+			LOGGER.info(msg_id);
+			String json = JSMSExample.sendValidSMSCode(msg_id,msg_code);
+			String info = JSONUtils.jsonErrorTostr(json);
+			if("true".equals(info)) {
+				//Assert.isNull(sendValidSMSCode,"验证码错误");
+				return new ResponseEntity<>(ResultModel.ok(),HttpStatus.OK);
+			}else if(info != ""){
+				Assert.isNull(info,info);
+				return res;
+			}
 		}
 		String req_type = authModel.getLoginType();
 		if("0".equals(req_type)) {//注册
@@ -77,7 +91,6 @@ public class loginInfoServiceImpl implements loginInfoService{
 				Assert.isNull(us.getMobile(),"该手机号已注册过");
 				return res;
 			}else {
-				
 				Users us2 = new Users();
 				us2.setMobile(phone);
 				us2.setLoginType("phone");
@@ -85,8 +98,8 @@ public class loginInfoServiceImpl implements loginInfoService{
 				us2 =  usersRepository.save(us2);
 				//凭证类
 				UsersCredential uc = new UsersCredential();
-				uc.setPassword(PasswordUtils.encryptPassword(us2.getMobile(), pwd, 2));
-				uc.setId(us2.getId());
+				//uc.setPassword(PasswordUtils.encryptPassword(us2.getMobile(), pwd, 2));
+				uc.setUserId(us2.getId());
 				uc.setSalt(uc.getCredentialsSalt());//加盐 
 				uc = userscredentialrepository.save(uc);
 				
@@ -98,7 +111,7 @@ public class loginInfoServiceImpl implements loginInfoService{
 			Users us = usersRepository.findByMobile(phone);
 			if(us != null) {
 				UsersCredential usersCredential = userscredentialrepository.findById(us.getId()).get();
-				usersCredential.setPassword(MyDES.encryptBasedDes(pwd));
+				//usersCredential.setPassword(PasswordUtils.encryptPassword(phone, pwd, 2));
 				userscredentialrepository.save(usersCredential);//暂时用报错 后面修改update更新操作
 				Assert.notNull("SUNCCESS","密码修改成功");
 				return new ResponseEntity<>(ResultModel.ok(), HttpStatus.OK);
@@ -153,17 +166,31 @@ public class loginInfoServiceImpl implements loginInfoService{
 		}
 	}
 	@Override
-	public ResponseEntity<ResultModel> sendcode(String phone) {
+	public ResponseEntity<ResultModel> sendcode(SendModel sendModel) {
+		String mobile = sendModel.getMobile();
 		ResponseEntity<ResultModel> res = new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		if("null".equals(phone)) {
-			Assert.notNull(phone,"请输入手机号");
+		if("null".equals(mobile) || mobile == null) {
+			Assert.notNull(mobile,"请输入手机号");
 			return res;
 		}
-		if(phone.length()!=11) {
-			Assert.isNull(phone,"手机号不正确");
+		if(mobile.length() != 11) {
+			Assert.isNull(mobile,"手机号不正确");
 			return res;
 		}
-		return null;
+		String json = JSMSExample.SendSMSCode(mobile);
+		String msg_id = JSON.parseObject(json).get("msg_id").toString();
+		redistemplate.opsForValue().set("SEND_CODE_"+mobile, msg_id,3000,TimeUnit.SECONDS);
+		System.out.println("====================="+msg_id);
+		return new ResponseEntity<>(ResultModel.ok(msg_id),HttpStatus.OK);
 	}
-
+	
+	public static void main(String[] args) {
+		String json ="{\"is_valid\":\"true\"}";
+		String a = "{\"is_valid\":false,\"error\":{\"code\":50011,\"message\":\"expired code\"}}";
+		JSONObject parseObject = JSON.parseObject(a);
+		System.out.println(parseObject.get("is_valid"));
+		String err = parseObject.get("error").toString();
+		System.out.println(err);
+	}
+	
 }

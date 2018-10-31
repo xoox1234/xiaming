@@ -4,7 +4,10 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import lombok.Data;
@@ -12,9 +15,11 @@ import lombok.Data;
 @Entity
 @Table(name = "Users")
 @Data
+@SequenceGenerator(name = "users_sqn", sequenceName = "user_info_sqn", allocationSize = 1)
 public class Users {
 	@Id
     @Column(name = "id")
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "users_sqn")
     private long id;
 	
 	@Column(name = "mobile")

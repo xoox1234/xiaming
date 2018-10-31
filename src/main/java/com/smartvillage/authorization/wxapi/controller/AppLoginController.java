@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,9 +13,11 @@ import com.smartvillage.manager.loginInfoService;
 import com.smartvillage.model.AuthModel;
 import com.smartvillage.model.LoginModel;
 import com.smartvillage.model.ResultModel;
+import com.smartvillage.model.SendModel;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 @RestController
 @RequestMapping("app/use")
@@ -40,6 +43,12 @@ public class AppLoginController {
 	public ResponseEntity<ResultModel> login(HttpServletRequest request,LoginModel LoginModel){
 		ResponseEntity<ResultModel> login = loginInfoService.login(LoginModel);
 		return login;
+	}
+	@RequestMapping(value = "sendcode" , method = RequestMethod.POST)
+	@ApiOperation(value = "校验码发送")
+	public ResponseEntity<ResultModel> sendcode(SendModel sendModel){
+		ResponseEntity<ResultModel> sendcode = loginInfoService.sendcode(sendModel);
+		return sendcode;
 		
 	}
 }
